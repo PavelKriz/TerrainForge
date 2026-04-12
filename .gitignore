@@ -1,0 +1,10 @@
+api_key.txt
+tests/*
+venv
+__pycache__
+images/*
+!images/.gitkeep
+mesh/*
+!mesh/.gitkeep
+graphs/*
+!graphs/.gitkeep

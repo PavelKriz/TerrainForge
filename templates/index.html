@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Selector</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-width: 300px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 2000;
+        }
+        #loadingOverlay.hidden {
+            display: none;
+        }
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 8px solid rgba(255, 255, 255, 0.25);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="info">
+        <p>Click and drag on the map to select a rectangle area</p>
+        <div id="coords"></div>
+        <button id="exportBtn" style="display:none;">Export Selection</button>
+    </div>
+    <div id="loadingOverlay" class="hidden">
+        <div class="spinner"></div>
+        <div class="loading-text">Processing... please wait</div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    <script>
+        const map = L.map('map').setView([51.505, -0.09], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        let isDrawing = false;
+        let startLat, startLng;
+        let rectangle = null;
+        let bounds = null;
+
+        map.on('mousedown', (e) => {
+            isDrawing = true;
+            startLat = e.latlng.lat;
+            startLng = e.latlng.lng;
+        });
+
+        map.on('mousemove', (e) => {
+            if (!isDrawing) return;
+
+            if (rectangle) map.removeLayer(rectangle);
+
+            bounds = L.latLngBounds(
+                [startLat, startLng],
+                [e.latlng.lat, e.latlng.lng]
+            );
+
+            rectangle = L.rectangle(bounds, {
+                color: '#007bff',
+                weight: 2,
+                fillOpacity: 0.2
+            }).addTo(map);
+
+            updateCoords(bounds);
+        });
+
+        map.on('mouseup', () => {
+            isDrawing = false;
+            if (bounds) {
+                document.getElementById('exportBtn').style.display = 'block';
+            }
+        });
+
+        function updateCoords(bounds) {
+            const south = bounds.getSouth().toFixed(6);
+            const north = bounds.getNorth().toFixed(6);
+            const west = bounds.getWest().toFixed(6);
+            const east = bounds.getEast().toFixed(6);
+            
+            document.getElementById('coords').innerHTML = `
+                <strong>Selection:</strong><br>
+                North: ${north}<br>
+                South: ${south}<br>
+                East: ${east}<br>
+                West: ${west}
+            `;
+        }
+
+        function showLoading(enabled) {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.toggle('hidden', !enabled);
+        }
+
+        document.getElementById('exportBtn').addEventListener('click', async () => {
+            if (!bounds) return;
+
+            const data = {
+                north: bounds.getNorth(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                west: bounds.getWest()
+            };
+
+            try {
+                showLoading(true);
+                const response = await fetch('/api/mesh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || 'Export failed');
+                }
+                window.location.href = result.download_url;
+            } catch (error) {
+                alert('Error exporting rectangle: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>
