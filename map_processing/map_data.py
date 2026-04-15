@@ -1,11 +1,13 @@
 import math
-
-from matplotlib.pyplot import grid
 import numpy as np
 import pyvista as pv
-import xarray as xr
 from map_processing.map_data_provider import BmiOpenTopoMapDataProvider, MapDataProvider
+import matplotlib
 import matplotlib.pyplot as plt
+
+# use non-interactive backend for matplotlib to avoid issues in headless environments
+# this backend allows only file saving and does not require a display server
+matplotlib.use('agg')
 
 
 class MapData:
@@ -83,3 +85,27 @@ class MapData:
         if self.mesh is None:
             self.create_mesh()
         self.mesh.save(path)
+
+    @staticmethod
+    def long_deg_to_m_at_lat(latitude: float, longitude: float) -> float:
+        """Convert longitude to meters using the correction factor."""
+        # longitude * correction factor at given latitude * 111319.444
+        # 111319.444 - Approximate length of a degree of longitude at the equator in meters
+        return longitude * math.cos(math.radians(latitude)) * 111319.444
+    
+    @staticmethod
+    def long_m_to_deg_at_lat(latitude: float, longitude_m: float) -> float:
+        """Convert longitude in meters to degrees using the correction factor."""
+        return longitude_m / (math.cos(math.radians(latitude)) * 111319.444)
+
+    @staticmethod
+    def lat_deg_to_m(latitude: float) -> float:
+        """Convert latitude to meters using the correction factor."""
+        # 111132 - Approximate length of a degree of latitude in meters
+        return latitude * 111132
+    
+    @staticmethod
+    def lat_m_to_deg(latitude_m: float) -> float:
+        """Convert latitude in meters to degrees."""
+        return latitude_m / 111132
+
