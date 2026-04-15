@@ -8,6 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
+    curl \
     gdal-bin \
     libgdal-dev \
     libgl1-mesa-glx \
@@ -20,11 +21,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfontconfig1 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
-RUN pip install --upgrade pip && pip install -r requirements.txt gunicorn
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD curl -fsS http://localhost:8000/health || exit 1
 
-COPY . ./
+COPY requirements.txt ./
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+RUN useradd -m -u 1000 terrainforge && \
+    mkdir -p /var/lib/terrainforge && \
+    chown -R terrainforge:terrainforge /var/lib/terrainforge /app
+
+COPY --chown=terrainforge:terrainforge . /var/lib/terrainforge/
+
+WORKDIR /var/lib/terrainforge
+
+USER terrainforge
 
 EXPOSE 8000
 
+# TODO document to mount secrets and or config
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "wsgi:application"]
+
+

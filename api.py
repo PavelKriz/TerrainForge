@@ -15,6 +15,11 @@ WEB_ROOT = '/'
 MAX_ROI_SIZE_METERS = 50000  # Maximum allowed size for the region of interest (in meters)
 
 
+# Health check endpoint
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'ok'}), 200
+
 # GET 
 @app.route(f'/', methods=['GET'])
 def get_map_selector():

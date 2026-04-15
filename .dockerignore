@@ -23,3 +23,4 @@ var
 *.sqlite3
 .env
 .git
+api_key.txt
