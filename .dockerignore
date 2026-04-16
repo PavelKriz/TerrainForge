@@ -32,4 +32,5 @@ mesh/*
 !mesh/.gitkeep
 graphs/*
 !graphs/.gitkeep
+tests/*
 

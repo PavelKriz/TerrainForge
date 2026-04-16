@@ -28,6 +28,7 @@ app.config['MAX_CONTENT_LENGTH'] = 1 * 1024  # 1 KB is plenty for coordinate JSO
 
 REQUIRED_COORD_FIELDS = ('north', 'east', 'south', 'west')
 MESH_RATE_LIMIT = '5 per minute'
+RATE_LIMIT_STORAGE_URI = config.get('rate_limit_storage_uri', 'memory://')
 ARTIFACT_TTL_SECONDS = 24 * 60 * 60
 ARTIFACT_MAX_FILES_PER_DIR = 50
 ARTIFACT_DIRECTORIES = (
@@ -36,8 +37,12 @@ ARTIFACT_DIRECTORIES = (
     Path('./mesh'),
 )
 
-# TODO - use no inmemory store for production, e.g. Redis or database
-limiter = Limiter(key_func=get_remote_address, app=app, default_limits=[])
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    storage_uri=RATE_LIMIT_STORAGE_URI,
+    default_limits=[],
+)
 
 # TODO not very robust or speedy cleanup strategy, but should work for a simple prototype. Consider more robust solutions for production.
 def cleanup_artifacts() -> None:
@@ -171,7 +176,7 @@ def download_page():
     return render_template('download.html', filename=filename)
 
 
-@app.route('/mesh/<path:filename>', methods=['GET'])
+@app.route('/mesh/<string:filename>', methods=['GET'])
 def download_stl(filename):
     return send_from_directory('mesh', secure_filename(filename), as_attachment=True)
 
