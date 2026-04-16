@@ -29,23 +29,24 @@ TerrainForge is a web-based application that allows users to select regions on a
    cd terrainforge
    ```
 
-2. Create a virtual environment:
+2. Create a virtual environment and install dependencies:
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. Install dependencies:
-   ```bash
    pip install -r requirements.txt
    ```
 
-4. Run the application:
+3. Create configuration `config.yaml` in the project directory:
+   ```yaml
+   topo_api_key_path: PATH_TO_OPENTOPOGRAPHY_API_KEY_TXT
+   ```
+
+4. Place your opentopography key in a plain text file
+
+5. Run the application and open in browser at `http://localhost:5000`:
    ```bash
    python api.py
    ```
-
-5. Open your browser and navigate to `http://localhost:5000`
 
 ### Docker Deployment
 
@@ -125,20 +126,9 @@ terrainforge/
 
 ## Dependencies
 
-- Flask: Web framework
-- PyVista: 3D visualization and mesh processing
-- BMI-Topography: Topographic data access
-- Xarray: N-dimensional arrays
-- Matplotlib: Plotting
-- Leaflet: Interactive maps (client-side)
+Installed in requirements files `requirements.txt`
 
 ## Development
-
-### Running Tests
-
-```bash
-python -m pytest tests/
-```
 
 ### Code Style
 

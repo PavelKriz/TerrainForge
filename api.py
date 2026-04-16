@@ -28,6 +28,7 @@ app.config['MAX_CONTENT_LENGTH'] = 1 * 1024  # 1 KB is plenty for coordinate JSO
 
 REQUIRED_COORD_FIELDS = ('north', 'east', 'south', 'west')
 MESH_RATE_LIMIT = '5 per minute'
+GENERAL_RATE_LIMIT ='20 per minute'  # General rate limit for non-mesh endpoints, can be adjusted as needed
 RATE_LIMIT_STORAGE_URI = config.get('rate_limit_storage_uri', 'memory://')
 ARTIFACT_TTL_SECONDS = 24 * 60 * 60
 ARTIFACT_MAX_FILES_PER_DIR = 50
@@ -37,6 +38,8 @@ ARTIFACT_DIRECTORIES = (
     Path('./mesh'),
 )
 
+# Rate limiter setup - a tool to limit the number of requests a client can make to the API in a given time frame to prevent abuse and ensure fair usage.
+# For one app, one process setup, the in-memory storage is sufficient and simple to use. For more complex setups (e.g., multiple processes or distributed systems), consider using a shared storage backend like Redis.
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
@@ -103,18 +106,21 @@ def parse_mesh_request():
     return coords, None
 
 
+# Error handler for rate limit exceeded
+@app.errorhandler(429)
+def handle_rate_limit(_error):
+    return jsonify({'error': 'Rate limit exceeded. Please retry later.'}), 429
+
+
 # Health check endpoint
 @app.route('/health', methods=['GET'])
 def health_check():
     return jsonify({'status': 'ok'}), 200
 
 
-@app.errorhandler(429)
-def handle_rate_limit(_error):
-    return jsonify({'error': 'Rate limit exceeded. Please retry later.'}), 429
-
 # GET 
 @app.route(f'/', methods=['GET'])
+@limiter.limit(GENERAL_RATE_LIMIT)
 def get_map_selector():
     return render_template('index.html')
 
@@ -167,6 +173,7 @@ def create():
 
 
 @app.route('/download', methods=['GET'])
+@limiter.limit(GENERAL_RATE_LIMIT)
 def download_page():
     filename = secure_filename(request.args.get('filename'))
     # Verify the file exists in the mesh directory
@@ -177,6 +184,7 @@ def download_page():
 
 
 @app.route('/mesh/<string:filename>', methods=['GET'])
+@limiter.limit(GENERAL_RATE_LIMIT)
 def download_stl(filename):
     return send_from_directory('mesh', secure_filename(filename), as_attachment=True)
 
