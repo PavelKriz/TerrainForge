@@ -56,7 +56,7 @@ TerrainForge is a web-based application that allows users to select regions on a
 
 2. Run the container:
    ```bash
-   docker run -p 8000:8000 terrainforge
+   docker run --mount type=bind,source=$(pwd)/api_key.txt,target=/terrainforge/api_key.txt -p 8080:8080 terrainforge:latest 
    ```
 
 3. Access the application at `http://localhost:8000`

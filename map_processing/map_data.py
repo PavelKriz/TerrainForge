@@ -1,3 +1,8 @@
+# check for OFF_SCREEN comments - these are not needed for local dev outside of container
+# OFF_SCREEN import OS and set env-var for OFFSCREEN rendering - container neeeded 
+import os
+os.environ['VTK_DEFAULT_OPENGL_WINDOW'] = 'vtkEGLRenderWindow'
+
 import math
 import numpy as np
 import pyvista as pv
@@ -6,8 +11,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 # use non-interactive backend for matplotlib to avoid issues in headless environments
-# this backend allows only file saving and does not require a display server
+# OFF_SCREEN this backend allows only file saving and does not require a display server
 matplotlib.use('agg')
+# OFF_SCREEN rendering for pyvista to avoid issues in headless environments
+pv.OFF_SCREEN = True
 
 
 class MapData:

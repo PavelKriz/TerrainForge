@@ -24,3 +24,12 @@ var
 .env
 .git
 api_key.txt
+
+# Ignore test files but not the directories
+images/*
+!images/.gitkeep
+mesh/*
+!mesh/.gitkeep
+graphs/*
+!graphs/.gitkeep
+
