@@ -127,9 +127,7 @@ terrainforge/
 
 - Flask: Web framework
 - PyVista: 3D visualization and mesh processing
-- Rasterio: Geospatial raster data processing
 - BMI-Topography: Topographic data access
-- Trimesh: Mesh processing
 - Xarray: N-dimensional arrays
 - Matplotlib: Plotting
 - Leaflet: Interactive maps (client-side)
@@ -163,4 +161,4 @@ This project follows PEP 8 guidelines. Use tools like `black` and `flake8` for c
 
 - OpenTopoMap for elevation data
 - Leaflet for the interactive map component
-- PyVista and Trimesh for 3D mesh processing
+- PyVista for 3D mesh processing
