@@ -1,2 +1,12 @@
-# Created by venv; see https://docs.python.org/3/library/venv.html
-*
+api_key.txt
+config.yaml
+prod_config.yaml
+tests/*
+venv
+__pycache__
+images/*
+!images/.gitkeep
+mesh/*
+!mesh/.gitkeep
+graphs/*
+!graphs/.gitkeep

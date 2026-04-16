@@ -1,24 +1,105 @@
 from flask import Flask, render_template, request, jsonify, url_for, send_from_directory
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 import map_processing as mp
 import uuid
 from pathlib import Path
+from math import isfinite
+import time
+import yaml
 
 
 app = Flask(__name__, template_folder='./templates')
 
+with open("config.yaml", "r") as config_file:
+    config = yaml.safe_load(config_file)
+api_key_path = config["topo_api_key_path"]
+
+map_data_provider = mp.BmiOpenTopoMapDataProvider(api_key_path)
 
 API_ROOT = '/api'
 WEB_ROOT = '/'
 
 
 MAX_ROI_SIZE_METERS = 50000  # Maximum allowed size for the region of interest (in meters)
+# limit the size of incoming JSON to prevent abuse
+app.config['MAX_CONTENT_LENGTH'] = 1 * 1024  # 1 KB is plenty for coordinate JSON
+
+REQUIRED_COORD_FIELDS = ('north', 'east', 'south', 'west')
+MESH_RATE_LIMIT = '5 per minute'
+ARTIFACT_TTL_SECONDS = 24 * 60 * 60
+ARTIFACT_MAX_FILES_PER_DIR = 200
+ARTIFACT_DIRECTORIES = (
+    Path('./images'),
+    Path('./graphs'),
+    Path('./mesh'),
+)
+
+limiter = Limiter(key_func=get_remote_address, app=app, default_limits=[])
+
+
+def cleanup_artifacts() -> None:
+    """Remove stale files and enforce per-directory file cap."""
+    now = time.time()
+    for directory in ARTIFACT_DIRECTORIES:
+        if not directory.exists():
+            continue
+
+        files = [path for path in directory.iterdir() if path.is_file()]
+        for path in files:
+            try:
+                if (now - path.stat().st_mtime) > ARTIFACT_TTL_SECONDS:
+                    path.unlink(missing_ok=True)
+            except OSError:
+                app.logger.warning('Failed to delete stale artifact: %s', path)
+
+        # Re-scan after stale cleanup and keep only the newest capped set.
+        files = [path for path in directory.iterdir() if path.is_file()]
+        if len(files) <= ARTIFACT_MAX_FILES_PER_DIR:
+            continue
+
+        files_sorted = sorted(files, key=lambda file_path: file_path.stat().st_mtime)
+        overflow_count = len(files_sorted) - ARTIFACT_MAX_FILES_PER_DIR
+        for path in files_sorted[:overflow_count]:
+            try:
+                path.unlink(missing_ok=True)
+            except OSError:
+                app.logger.warning('Failed to delete overflow artifact: %s', path)
+
+
+def parse_mesh_request():
+    """Parse and validate mesh request payload."""
+    item = request.get_json(silent=True)
+    if not isinstance(item, dict):
+        return None, (jsonify({'error': 'Invalid JSON payload.'}), 400)
+
+    missing_fields = [field for field in REQUIRED_COORD_FIELDS if field not in item]
+    if missing_fields:
+        return None, (jsonify({'error': f"Missing required fields: {', '.join(missing_fields)}"}), 400)
+
+    coords = {}
+    try:
+        for field in REQUIRED_COORD_FIELDS:
+            value = float(item[field])
+            if not isfinite(value):
+                raise ValueError
+            coords[field] = value
+    except (TypeError, ValueError):
+        return None, (jsonify({'error': 'Coordinates must be finite numbers.'}), 400)
+
+    return coords, None
 
 
 # Health check endpoint
 @app.route('/health', methods=['GET'])
 def health_check():
     return jsonify({'status': 'ok'}), 200
+
+
+@app.errorhandler(429)
+def handle_rate_limit(_error):
+    return jsonify({'error': 'Rate limit exceeded. Please retry later.'}), 429
 
 # GET 
 @app.route(f'/', methods=['GET'])
@@ -28,13 +109,18 @@ def get_map_selector():
 
 # CREATE
 @app.route(f'{API_ROOT}/mesh', methods=['POST'])
+@limiter.limit(MESH_RATE_LIMIT)
 def create():
-    # get variables
-    item = request.get_json()
-    north = float(item['north'])
-    east = float(item['east'])
-    south = float(item['south'])
-    west = float(item['west'])
+    coords, error_response = parse_mesh_request()
+    if error_response is not None:
+        return error_response
+
+    cleanup_artifacts()
+
+    north = coords['north']
+    east = coords['east']
+    south = coords['south']
+    west = coords['west']
 
     # log request
     app.logger.debug(f'Requested roi: ({north}, {east}, {south}, {west})')
@@ -45,16 +131,19 @@ def create():
     if lat_width > MAX_ROI_SIZE_METERS or long_width > MAX_ROI_SIZE_METERS:
         return jsonify({'error': 'ROI size exceeds the maximum allowed size.'}), 400
 
+    # check if coordinates are valid
+    if not (-90 <= south < north <= 90) or not (-180 <= west < east <= 180):
+        return jsonify({'error': 'Invalid coordinates.'}), 400
+
     # create path variables
     assigned_uuid = str(uuid.uuid4())
     out_image_path = Path("./images").joinpath(secure_filename(f'{assigned_uuid}.png'))
     out_graph_path = Path("./graphs").joinpath(secure_filename(f'{assigned_uuid}.png'))
     out_mesh_path = Path("./mesh").joinpath(secure_filename(f'{assigned_uuid}.stl'))
 
-    
-
     # create mesh and render
-    mapdata = mp.MapData(roi=(north, east, south, west))
+    mapdata = mp.MapData(data_provider=map_data_provider,\
+                         roi=(north, east, south, west))
     # TODO - implement later on with factor in user input
     # mapdata.scale_mesh(factor=2)
     mapdata.render(screenshot_output_path=out_image_path)

@@ -24,9 +24,9 @@ class MapDataProvider(ABC):
 class BmiOpenTopoMapDataProvider(MapDataProvider):
     """Implementation that reads map data using the bmi_topography library from open-topography."""
 
-    def __init__(self):
+    def __init__(self, api_key_path: str):
         self.geo_params = Topography.DEFAULT.copy()
-        api_key_file = open("api_key.txt", "r")
+        api_key_file = open(api_key_path, "r")
         self.api_key = api_key_file.read().strip()
         api_key_file.close()
         self.geo_params["api_key"] = self.api_key

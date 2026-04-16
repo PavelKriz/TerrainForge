@@ -20,14 +20,14 @@ pv.OFF_SCREEN = True
 class MapData:
     """Implementation of MapData using xarray."""
 
-    def __init__(self, roi: tuple[int, int, int, int]):
+    def __init__(self, data_provider, roi: tuple[int, int, int, int]):
         """Initialize MapData with a region of interest (ROI).
         
         Args:
             roi: A tuple representing the region of interest (north, east, south, west).
         """
         self.roi=roi
-        self.map_provider = BmiOpenTopoMapDataProvider()
+        self.map_provider = data_provider
         self.map_data = None
         self.map_data_corrected = False
         self.mesh = None
