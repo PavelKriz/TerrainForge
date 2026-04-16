@@ -29,16 +29,17 @@ app.config['MAX_CONTENT_LENGTH'] = 1 * 1024  # 1 KB is plenty for coordinate JSO
 REQUIRED_COORD_FIELDS = ('north', 'east', 'south', 'west')
 MESH_RATE_LIMIT = '5 per minute'
 ARTIFACT_TTL_SECONDS = 24 * 60 * 60
-ARTIFACT_MAX_FILES_PER_DIR = 200
+ARTIFACT_MAX_FILES_PER_DIR = 50
 ARTIFACT_DIRECTORIES = (
     Path('./images'),
     Path('./graphs'),
     Path('./mesh'),
 )
 
+# TODO - use no inmemory store for production, e.g. Redis or database
 limiter = Limiter(key_func=get_remote_address, app=app, default_limits=[])
 
-
+# TODO not very robust or speedy cleanup strategy, but should work for a simple prototype. Consider more robust solutions for production.
 def cleanup_artifacts() -> None:
     """Remove stale files and enforce per-directory file cap."""
     now = time.time()
@@ -46,7 +47,10 @@ def cleanup_artifacts() -> None:
         if not directory.exists():
             continue
 
-        files = [path for path in directory.iterdir() if path.is_file()]
+        files = [
+            path for path in directory.iterdir()
+            if path.is_file() and path.name != '.gitkeep'
+        ]
         for path in files:
             try:
                 if (now - path.stat().st_mtime) > ARTIFACT_TTL_SECONDS:
@@ -55,7 +59,10 @@ def cleanup_artifacts() -> None:
                 app.logger.warning('Failed to delete stale artifact: %s', path)
 
         # Re-scan after stale cleanup and keep only the newest capped set.
-        files = [path for path in directory.iterdir() if path.is_file()]
+        files = [
+            path for path in directory.iterdir()
+            if path.is_file() and path.name != '.gitkeep'
+        ]
         if len(files) <= ARTIFACT_MAX_FILES_PER_DIR:
             continue
 
@@ -114,7 +121,8 @@ def create():
     coords, error_response = parse_mesh_request()
     if error_response is not None:
         return error_response
-
+    
+    # TODO not very robust or speedy cleanup strategy, but should work for a simple prototype. Consider more robust solutions for production.
     cleanup_artifacts()
 
     north = coords['north']
