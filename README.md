@@ -1,6 +1,6 @@
 # TerrainForge
 
-TerrainForge is a web-based application that allows users to select regions on an interactive map and generate 3D printable STL meshes from elevation data. The application fetches topographic data, processes it into a 3D mesh, and provides downloadable STL files for 3D printing.
+TerrainForge is a web-based application that allows users to select regions on an interactive map and generate 3D printable STL meshes from elevation data. The application fetches topographic data, processes it into a 3D mesh, and provides downloadable STL files for 3D printing. You can see the service deployed at: https://terrainforge.pavelkriz.com/
 
 > **NOTE 🗒️:** this a valuable project for anyone who would want to study the principle without complex source code. Who would like to export files for 3d print i recommend this web: https://map2model.com/ tool.
 
