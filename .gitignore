@@ -10,3 +10,4 @@ mesh/*
 !mesh/.gitkeep
 graphs/*
 !graphs/.gitkeep
+terrainforge-*.tar*

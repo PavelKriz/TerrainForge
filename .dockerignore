@@ -23,14 +23,25 @@ var
 *.sqlite3
 .env
 .git
-api_key.txt
+.venv
+venv
 
-# Ignore test files but not the directories
+# Custom files
+api_key.txt
+config.yaml
+prod_config.yaml
+tests/*
+
+# ignore any possible docker images
+terrainforge-*.tar*
+
+# Ignore artifacts files but not the directories
 images/*
 !images/.gitkeep
 mesh/*
 !mesh/.gitkeep
 graphs/*
 !graphs/.gitkeep
-tests/*
+
+
 
