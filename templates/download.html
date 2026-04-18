@@ -91,7 +91,7 @@
         }
         .button-link {
             display: inline-block;
-            margin-top: 20px;
+            margin-bottom: 10px;
             padding: 12px 24px;
             background: #007bff;
             color: white;
@@ -128,7 +128,9 @@
             <p>Your STL file is ready for download.</p>
             {% if artifact_id %}
                 <p><strong>ID:</strong> {{ artifact_id }}</p>
-                <div class="preview">
+                <a id="downloadLink" class="button-link" href="/mesh/{{ artifact_id }}.stl">Download File</a>
+                <a class="button-link secondary" href="/">Generate again</a>
+                <div class="preview">    
                     <div class="preview-grid">
                         <div class="preview-card">
                             <h3>Terrain Preview</h3>
@@ -142,11 +144,11 @@
                         </div>
                     </div>
                 </div>
-                <a id="downloadLink" class="button-link" href="/mesh/{{ artifact_id }}.stl">Download File</a>
             {% else %}
                 <p>No artifact id specified.</p>
+                <a class="button-link secondary" href="/">Generate again</a>
             {% endif %}
-            <a class="button-link secondary" href="/">Generate again</a>
+            
         </div>
     </main>
     <footer>
