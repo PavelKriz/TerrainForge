@@ -64,7 +64,7 @@ class MapData:
         if self.mesh is None:
             self.create_mesh()
         plotter = pv.Plotter(off_screen=True)
-        plotter.add_mesh(self.mesh, color="lightblue", show_edges=True)        
+        plotter.add_mesh(self.mesh, color="lightblue", lighting=True)        
         if screenshot_output_path is not None:
             image = plotter.screenshot(screenshot_output_path)
         else:

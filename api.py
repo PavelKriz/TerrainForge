@@ -168,19 +168,35 @@ def create():
     mapdata.render(screenshot_output_path=out_image_path)
     mapdata.render_map_data(screenshot_output_path=out_graph_path)
     mapdata.save_stl(out_mesh_path)
-    download_url = url_for('download_page', filename=out_mesh_path.name)
+    download_url = url_for('download_page', artifact_id=assigned_uuid)
     return jsonify({'download_url': download_url}), 201
 
 
 @app.route('/download', methods=['GET'])
 @limiter.limit(GENERAL_RATE_LIMIT)
 def download_page():
-    filename = secure_filename(request.args.get('filename'))
+    artifact_id = secure_filename(request.args.get('artifact_id', ''))
+    if not artifact_id:
+        return jsonify({'error': 'Missing artifact_id.'}), 400
+
+    mesh_filename = secure_filename(f'{artifact_id}.stl')
     # Verify the file exists in the mesh directory
-    filepath = Path("./mesh").joinpath(filename)
+    filepath = Path("./mesh").joinpath(mesh_filename)
     if not filepath.exists() or not filepath.is_file():
         return jsonify({'error': 'File not found.'}), 404
-    return render_template('download.html', filename=filename)
+    return render_template('download.html', artifact_id=artifact_id)
+
+
+@app.route('/images/<string:filename>', methods=['GET'])
+@limiter.limit(GENERAL_RATE_LIMIT)
+def preview_image(filename):
+    return send_from_directory('images', secure_filename(filename))
+
+
+@app.route('/graphs/<string:filename>', methods=['GET'])
+@limiter.limit(GENERAL_RATE_LIMIT)
+def graph_image(filename):
+    return send_from_directory('graphs', secure_filename(filename))
 
 
 @app.route('/mesh/<string:filename>', methods=['GET'])
