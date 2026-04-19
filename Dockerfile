@@ -33,16 +33,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install the Python dependencies from the builder stage
 COPY --from=builder /install /usr/local
 
-RUN useradd -m -u 1000 terrainforge
+RUN useradd -m -u 1000 terrameshify
 
-RUN mkdir -p /terrainforge
-COPY . /terrainforge/
+RUN mkdir -p /terrameshify
+COPY . /terrameshify/
 
-RUN chgrp -R 0 /terrainforge && \
-    chmod -R g+rwX /terrainforge && \
-    chmod -R a+rwX /terrainforge/images && \
-    chmod -R a+rwX /terrainforge/graphs &&\
-    chmod -R a+rwX /terrainforge/mesh
+RUN chgrp -R 0 /terrameshify && \
+    chmod -R g+rwX /terrameshify && \
+    chmod -R a+rwX /terrameshify/images && \
+    chmod -R a+rwX /terrameshify/graphs &&\
+    chmod -R a+rwX /terrameshify/mesh
 
 # set home, at leats bmi-topography needs it to store the cache, and it should be writable by any any user
 ENV HOME=/tmp
@@ -50,9 +50,9 @@ ENV XDG_CACHE_HOME=/tmp/.cache
 
 RUN mkdir -p /tmp/.cache && chmod -R 1777 /tmp
 
-WORKDIR /terrainforge
+WORKDIR /terrameshify
 
-USER terrainforge
+USER terrameshify
 
 EXPOSE 8080
 

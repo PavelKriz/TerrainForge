@@ -33,7 +33,7 @@ prod_config.yaml
 tests/*
 
 # ignore any possible docker images
-terrainforge-*.tar*
+terrameshify-*.tar*
 
 # Ignore artifacts files but not the directories
 images/*

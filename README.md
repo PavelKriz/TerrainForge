@@ -1,6 +1,6 @@
-# TerrainForge
+# TerraMeshify
 
-TerrainForge is a web-based application that allows users to select regions on an interactive map and generate 3D printable STL meshes from elevation data. The application fetches topographic data, processes it into a 3D mesh, and provides downloadable STL files for 3D printing. You can see the service deployed at: https://terrainforge.pavelkriz.com/
+TerraMeshify is a web-based application that allows users to select regions on an interactive map and generate 3D printable STL meshes from elevation data. The application fetches topographic data, processes it into a 3D mesh, and provides downloadable STL files for 3D printing. You can see the service deployed at: https://terrameshify.pavelkriz.com/
 
 > **NOTE 🗒️:** this a valuable project for anyone who would want to study the principle without complex source code. Who would like to export files for 3d print i recommend this web: https://map2model.com/ tool.
 
@@ -26,7 +26,7 @@ TerrainForge is a web-based application that allows users to select regions on a
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd terrainforge
+   cd terrameshify
    ```
 
 2. Create a virtual environment and install dependencies:
@@ -52,12 +52,12 @@ TerrainForge is a web-based application that allows users to select regions on a
 
 1. Build the Docker image:
    ```bash
-   docker build -t terrainforge .
+   docker build -t terrameshify .
    ```
 
 2. Run the container:
    ```bash
-   docker run --mount type=bind,source=$(pwd)/prod_config.yaml,target=/terrainforge/config.yaml --mount type=bind,source=PATH_TO_API_KEY.txt,target=/PATH_TO_API_KEY.txt -p 8080:8080 terrainforge:latest 
+   docker run --mount type=bind,source=$(pwd)/prod_config.yaml,target=/terrameshify/config.yaml --mount type=bind,source=PATH_TO_API_KEY.txt,target=/PATH_TO_API_KEY.txt -p 8080:8080 terrameshify:latest 
    ```
 
 3. Access the application at `http://localhost:8000`
@@ -106,7 +106,7 @@ Returns the STL file as an attachment.
 ## Project Structure
 
 ```
-terrainforge/
+terrameshify/
 ├── api.py                 # Main Flask application
 ├── wsgi.py               # WSGI entry point for production
 ├── requirements.txt      # Python dependencies
